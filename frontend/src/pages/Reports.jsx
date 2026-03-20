@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import Card from '../components/Card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Brush } from 'recharts'; // 🌟 新增引入 Brush
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -10,6 +10,7 @@ function Reports() {
   const [chartData, setChartData] = useState([]);
   const [summary, setSummary] = useState({ totalIncome: 0, totalExpense: 0, netProfit: 0 });
   const [loading, setLoading] = useState(false);
+  const [showChart, setShowChart] = useState(false); // 🌟 新增：控制圖表是否顯示的狀態
 
   const API_BASE_URL = 'http://8.138.242.143/api/reports';
 
@@ -24,6 +25,8 @@ function Reports() {
     if (!dateRange.startDate || !dateRange.endDate) return alert('請選擇完整的日期範圍');
     
     setLoading(true);
+    setShowChart(false); // 🌟 每次重新查詢時，預設先關閉圖表
+    
     try {
       const token = await getAuthToken();
       // 透過網址參數傳遞日期給後端 API
@@ -44,21 +47,18 @@ function Reports() {
     }
   };
 
-  // 🌟 核心邏輯：把後端傳來的零散資料，按「日期」分組計算，變成圖表看得懂的格式
   const processDataForChart = (orders, expenses) => {
     const dailyData = {};
     let tIncome = 0;
     let tExpense = 0;
 
-    // 處理收入 (訂單)
     orders.forEach(order => {
-      const date = order.created_at.split('T')[0]; // 取出 YYYY-MM-DD
+      const date = order.created_at.split('T')[0];
       if (!dailyData[date]) dailyData[date] = { date, income: 0, expense: 0 };
       dailyData[date].income += Number(order.total_amount);
       tIncome += Number(order.total_amount);
     });
 
-    // 處理開支
     expenses.forEach(exp => {
       const date = exp.created_at.split('T')[0];
       if (!dailyData[date]) dailyData[date] = { date, income: 0, expense: 0 };
@@ -66,14 +66,12 @@ function Reports() {
       tExpense += Number(exp.amount);
     });
 
-    // 將物件轉成陣列，並按日期排序
     const finalData = Object.values(dailyData).sort((a, b) => new Date(a.date) - new Date(b.date));
     
     setChartData(finalData);
     setSummary({ totalIncome: tIncome, totalExpense: tExpense, netProfit: tIncome - tExpense });
   };
 
-  // 🌟 匯出 PDF 核心功能
   const exportPDF = () => {
     const reportElement = document.getElementById('pdf-content-area');
     
@@ -96,7 +94,8 @@ function Reports() {
     input: { padding: '10px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none' },
     btnPrimary: { backgroundColor: '#000', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' },
     btnExport: { backgroundColor: '#28a745', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' },
-    summaryBox: { display: 'flex', gap: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', marginBottom: '20px' },
+    btnToggleChart: { backgroundColor: '#f0f0f0', color: '#333', border: '1px solid #ccc', padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontWeight: '500', width: '100%', marginTop: '20px', transition: '0.2s' }, // 🌟 新增按鈕樣式
+    summaryBox: { display: 'flex', gap: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px', marginTop: '20px' },
     statBox: { flex: 1, padding: '20px', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)', textAlign: 'center' },
     statLabel: { fontSize: '14px', color: '#666', marginBottom: '8px' },
     statValue: { fontSize: '24px', fontWeight: 'bold' }
@@ -120,7 +119,7 @@ function Reports() {
         </form>
       </Card>
 
-      {/* 🌟 這個 div 加上 id，就是我們要截圖轉 PDF 的區域 */}
+      {/* 🌟 只要有資料，就永遠先顯示這三個數字框 (不需要等圖表打開) */}
       {chartData.length > 0 && (
         <div id="pdf-content-area" style={{ backgroundColor: '#f4f7f6', paddingBottom: '20px' }}>
           
@@ -141,21 +140,41 @@ function Reports() {
             </div>
           </div>
 
-          <Card title="每日收支趨勢圖">
-            <div style={{ width: '100%', height: 400, padding: '20px 0' }}>
-              <ResponsiveContainer>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="income" name="收入" fill="#28a745" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="expense" name="開支" fill="#d9534f" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
+          {/* 🌟 切換圖表顯示狀態的按鈕 */}
+          <button 
+            style={styles.btnToggleChart} 
+            onClick={() => setShowChart(!showChart)}
+          >
+            {showChart ? '▲ 隱藏圖表' : '▼ 查看每日收支圖表'}
+          </button>
+
+          {/* 🌟 只有當 showChart 為 true 時，才渲染圖表 */}
+          {showChart && (
+            <Card title="每日收支趨勢圖" style={{ marginTop: '20px' }}>
+              <div style={{ width: '100%', height: 450, padding: '20px 0' }}> {/* 稍微調高 height 給 Brush 空間 */}
+                <ResponsiveContainer>
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="income" name="收入" fill="#28a745" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="expense" name="開支" fill="#d9534f" radius={[4, 4, 0, 0]} />
+                    
+                    {/* 🌟 新增 Brush 元件：在圖表下方加入一個可拖拉的時間軸，解決資料過於密集的狀況 */}
+                    <Brush 
+                      dataKey="date" 
+                      height={30} 
+                      stroke="#8884d8" 
+                      startIndex={Math.max(0, chartData.length - 14)} // 預設只顯示最後 14 天的資料，使用者可以自己拉開
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          )}
+
         </div>
       )}
     </div>

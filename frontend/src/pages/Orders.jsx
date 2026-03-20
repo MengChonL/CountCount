@@ -192,7 +192,7 @@ function Orders() {
                     <option value="" disabled>選擇商品</option>
                     {products.map((p) => (
                       <option key={p.id} value={String(p.id)}>
-                        {p.name} (NT$ {p.price})
+                        {p.name} ($ {p.price})
                       </option>
                     ))}
                   </select>
