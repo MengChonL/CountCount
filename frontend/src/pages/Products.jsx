@@ -19,7 +19,7 @@ function Products() {
   });
 
   // 後端 server 目前啟在 5001（見 backend/src/server.js）
-  const API_BASE_URL = 'http://localhost:5001/api/products';
+  const API_BASE_URL = 'http://8.138.242.143/api/products';
 
   useEffect(() => {
     fetchProducts();

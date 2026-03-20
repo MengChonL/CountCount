@@ -13,7 +13,7 @@ function Orders() {
   const [cartItems, setCartItems] = useState([{ product_id: '', quantity: 1 }]);
 
   // 後端 server 目前啟在 5001（見 backend/src/server.js）
-  const API_BASE_URL = 'http://localhost:5001/api';
+  const API_BASE_URL = 'http://8.138.242.143/api';
 
   useEffect(() => {
     fetchData();

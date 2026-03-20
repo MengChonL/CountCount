@@ -11,7 +11,7 @@ function Reports() {
   const [summary, setSummary] = useState({ totalIncome: 0, totalExpense: 0, netProfit: 0 });
   const [loading, setLoading] = useState(false);
 
-  const API_BASE_URL = 'http://localhost:5001/api/reports';
+  const API_BASE_URL = 'http://8.138.242.143/api/reports';
 
   const getAuthToken = async () => {
     const { data: { session } } = await supabase.auth.getSession();

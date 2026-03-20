@@ -14,7 +14,7 @@ function Expenses() {
   });
 
   // 🌟 注意這裡的 API 網址，對應我們剛剛寫的後端路由
-  const API_BASE_URL = 'http://localhost:5001/api/expenses';
+  const API_BASE_URL = 'http://8.138.242.143/api/expenses';
 
   useEffect(() => {
     fetchExpenses();

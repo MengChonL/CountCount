@@ -37,21 +37,13 @@ function Login() {
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
+	  options:{
+		data:{
+			shop_name: formData.shopName
+		}
+	 }
         });
         if (authError) throw authError;
-
-        // 2. 🌟 註冊成功後，立刻在 merchants 表建立這家店的資料
-        // 注意：這裡的 authData.user.id 就是未來的 merchant_id
-        if (authData.user) {
-          const { error: dbError } = await supabase
-            .from('merchants')
-            .insert([{ 
-              id: authData.user.id, 
-              shop_name: formData.shopName 
-            }]);
-          
-          if (dbError) throw dbError;
-        }
 
         alert('註冊成功！請直接登入。');
         setIsLoginMode(true); // 註冊完切換回登入模式
