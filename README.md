@@ -1,1 +1,1 @@
-http://aqshxpz.shop/login or http://8.138.242.143 use the alibaba Cloud severice +nginx + docker +React.js(front en)+Node.js+cloudflare waf
+http://aqshxpz.shop/login domain name hasn't passed the ICP, so it can not be resolved by the DNS server, or http://8.138.242.143 uses the Alibaba Cloud service +nginx +docker +React.js  +Node.js+cloudflare WAF 3/31
